@@ -3,6 +3,8 @@ var $$ = document.querySelectorAll.bind(document);
 
 var musicController = (function () {
   var data = {
+    currentSongIndex: 0,
+    isPlaying: false,
     playlist: [
       {
         id: 1,
@@ -53,6 +55,18 @@ var musicController = (function () {
     getSong: function (index) {
       return data.playlist[index] ?? undefined;
     },
+    setIsPlaying: function (payload) {
+      data.isPlaying = payload;
+    },
+    getisPlaying: function () {
+      return data.isPlaying;
+    },
+    setCurrentSongIndex: function (currentIndex) {
+      data.currentSongIndex = currentIndex;
+    },
+    getCurrentSongIndex: function () {
+      return data.currentSongIndex;
+    },
   };
 })();
 
@@ -66,6 +80,8 @@ var UIController = (function () {
     playBtn: ".btn-toggle-play",
     playerEl: ".player",
     progressEl: "#progress",
+    nextBtn: ".btn-next",
+    prevBtn: ".btn-prev",
   };
 
   var animation = $(DOMstrings.compactDisc).animate(
@@ -76,6 +92,25 @@ var UIController = (function () {
     }
   );
   animation.pause();
+
+  var nextSong = function (musicCtrl, loadSongFn) {
+    return function () {
+      var nextSongIndex, playlistLength;
+
+      playlistLength = musicCtrl.getPlaylist().length - 1;
+      nextSongIndex = musicCtrl.getCurrentSongIndex() + 1;
+      musicCtrl.setCurrentSongIndex(nextSongIndex);
+
+      if (nextSongIndex > playlistLength) {
+        musicCtrl.setCurrentSongIndex(0);
+        nextSongIndex = 0;
+      }
+
+      loadSongFn(musicCtrl.getSong(nextSongIndex));
+      musicCtrl.setIsPlaying(true);
+      $(DOMstrings.audio).play();
+    };
+  };
 
   return {
     displaySongs: function (songs) {
@@ -123,11 +158,13 @@ var UIController = (function () {
     },
     audioOnPlay: function () {
       $(DOMstrings.audio).onplay = function () {
+        $(DOMstrings.playerEl).classList.add("playing");
         animation.play();
       };
     },
     audioOnPause: function () {
       $(DOMstrings.audio).onpause = function () {
+        $(DOMstrings.playerEl).classList.remove("playing");
         animation.pause();
       };
     },
@@ -147,6 +184,59 @@ var UIController = (function () {
           (e.target.value * $(DOMstrings.audio).duration) / 100;
       });
     },
+    audioOnEnded: function (musicCtrl, loadSongFn) {
+      $(DOMstrings.audio).onended = nextSong(musicCtrl, loadSongFn);
+    },
+    playMusic: function (musicController) {
+      function handleEvent(musicController, DOMstrings) {
+        return function () {
+          if (!musicController.getisPlaying()) {
+            $(DOMstrings.audio).play();
+            musicController.setIsPlaying(true);
+          } else {
+            $(DOMstrings.audio).pause();
+            musicController.setIsPlaying(false);
+          }
+        };
+      }
+      $(DOMstrings.playBtn).addEventListener(
+        "click",
+        handleEvent(musicController, DOMstrings),
+        false
+      );
+    },
+    nextSong: function (musicCtrl, loadSongFn) {
+      $(DOMstrings.nextBtn).addEventListener(
+        "click",
+        nextSong(musicCtrl, loadSongFn)
+      );
+    },
+    prevSong: function (musicCtrl, loadSongFn) {
+      function handleEvent(musicCtrl, loadSongFn) {
+        return function () {
+          var prevSongindex, playlistLength;
+
+          playlistLength = musicCtrl.getPlaylist().length - 1;
+          prevSongindex = musicCtrl.getCurrentSongIndex() - 1;
+
+          musicCtrl.setCurrentSongIndex(prevSongindex);
+
+          if (prevSongindex < 0) {
+            musicCtrl.setCurrentSongIndex(playlistLength);
+            prevSongindex = playlistLength;
+          }
+
+          loadSongFn(musicCtrl.getSong(prevSongindex));
+          musicCtrl.setIsPlaying(true);
+          $(DOMstrings.audio).play();
+        };
+      }
+
+      $(DOMstrings.prevBtn).addEventListener(
+        "click",
+        handleEvent(musicCtrl, loadSongFn)
+      );
+    },
     getDOMstrings: function () {
       return DOMstrings;
     },
@@ -154,30 +244,26 @@ var UIController = (function () {
 })();
 
 var app = (function (musicCtrl, UICtrl) {
-  var DOM = UICtrl.getDOMstrings();
-  var setupEventListener = function () {
+  var setupEventListener, currentSongIndex;
+  currentSongIndex = musicCtrl.getCurrentSongIndex();
+  setupEventListener = function () {
     UICtrl.displaySongs(musicCtrl.getPlaylist());
-    UICtrl.loadSong(musicCtrl.getSong(0));
+    UICtrl.loadSong(musicCtrl.getSong(currentSongIndex));
     UICtrl.scrollEvent();
-
-    $(DOM.playBtn).addEventListener("click", playMusic);
+    // Click on playmusic Button
+    UICtrl.playMusic(musicCtrl);
 
     UICtrl.audioOnPlay();
     UICtrl.audioOnPause();
     UICtrl.progressBarOnChange();
     UICtrl.audioOnChangeTime();
-  };
+    UICtrl.audioOnEnded(musicCtrl, UICtrl.loadSong);
 
-  var playMusic = function () {
-    if ($(DOM.playerEl).getAttribute("cd") === "start") {
-      $(DOM.audio).play();
-      $(DOM.playerEl).setAttribute("cd", "starting");
-      $(DOM.playerEl).classList.add("playing");
-    } else {
-      $(DOM.audio).pause();
-      $(DOM.playerEl).setAttribute("cd", "start");
-      $(DOM.playerEl).classList.remove("playing");
-    }
+    // Click on Next Button
+    UICtrl.nextSong(musicCtrl, UICtrl.loadSong);
+
+    // Click on Prev Button
+    UICtrl.prevSong(musicCtrl, UICtrl.loadSong);
   };
 
   return {
