@@ -6,11 +6,11 @@ var musicController = (function () {
     playlist: [
       {
         id: 1,
-        name: "Denim & Rhinestones",
-        singer: "Carrie",
-        url: "https://f9-stream.nixcdn.com/NhacCuaTui1026/DenimRhinestones-CarrieUnderwood-7182887.mp3?st=XV1la9bUYSl6_Zr4t-MHpA&e=1654831545&t=1654745034909",
+        name: "On My Way",
+        singer: "Alan Walker",
+        url: "https://c1-ex-swe.nixcdn.com/Sony_Audio60/OnMyWay-AlanWalkerSabrinaCarpenterFarruko-5919403.mp3?st=vHK7l3pwWYrBmd-Rl_qaGg&e=1654836657&t=1654750146688",
         image:
-          "https://avatar-ex-swe.nixcdn.com/playlist/2022/04/05/1/f/a/d/1649149056764_500.jpg",
+          "https://avatar-ex-swe.nixcdn.com/playlist/2019/03/21/b/2/9/4/1553136202684_500.jpg",
       },
       {
         id: 2,
@@ -22,11 +22,11 @@ var musicController = (function () {
       },
       {
         id: 3,
-        name: "On My Way",
-        singer: "Alan Walker",
-        url: "https://c1-ex-swe.nixcdn.com/Sony_Audio60/OnMyWay-AlanWalkerSabrinaCarpenterFarruko-5919403.mp3?st=vHK7l3pwWYrBmd-Rl_qaGg&e=1654836657&t=1654750146688",
+        name: "Denim & Rhinestones",
+        singer: "Carrie",
+        url: "https://f9-stream.nixcdn.com/NhacCuaTui1026/DenimRhinestones-CarrieUnderwood-7182887.mp3?st=XV1la9bUYSl6_Zr4t-MHpA&e=1654831545&t=1654745034909",
         image:
-          "https://avatar-ex-swe.nixcdn.com/playlist/2019/03/21/b/2/9/4/1553136202684_500.jpg",
+          "https://avatar-ex-swe.nixcdn.com/playlist/2022/04/05/1/f/a/d/1649149056764_500.jpg",
       },
       {
         id: 4,
@@ -50,14 +50,32 @@ var musicController = (function () {
     getPlaylist: function () {
       return data.playlist;
     },
+    getSong: function (index) {
+      return data.playlist[index] ?? undefined;
+    },
   };
 })();
 
 var UIController = (function () {
-  var DOMstring = {
+  var DOMstrings = {
     playlistEl: ".playlist",
     compactDisc: ".cd",
+    songLabel: "header h2",
+    songThumb: ".cd-thumb",
+    audio: "#audio",
+    playBtn: ".btn-toggle-play",
+    playerEl: ".player",
+    progressEl: "#progress",
   };
+
+  var animation = $(DOMstrings.compactDisc).animate(
+    [{ transform: "rotate(360deg)" }],
+    {
+      duration: 10000, // 10 seconds
+      iterations: Infinity,
+    }
+  );
+  animation.pause();
 
   return {
     displaySongs: function (songs) {
@@ -79,33 +97,89 @@ var UIController = (function () {
       });
 
       newHtmls = htmls.join("");
-      $(DOMstring.playlistEl).insertAdjacentHTML("beforeend", newHtmls);
+      $(DOMstrings.playlistEl).insertAdjacentHTML("beforeend", newHtmls);
     },
     scrollEvent: function () {
       var scrollTop, newCdWidth, cdWidth;
-      cdWidth = $(DOMstring.compactDisc).offsetWidth;
+      cdWidth = $(DOMstrings.compactDisc).offsetWidth;
 
       document.onscroll = function () {
         scrollTop = window.scrollY || document.documentElement.scrollTop;
         newCdWidth = cdWidth - scrollTop;
-        console.log({ cdWidth, newCdWidth });
+
         if (newCdWidth > 0) {
-          $(DOMstring.compactDisc).style.width = newCdWidth + "px";
+          $(DOMstrings.compactDisc).style.width = newCdWidth + "px";
         } else {
-          $(DOMstring.compactDisc).style.width = 0;
+          $(DOMstrings.compactDisc).style.width = 0;
         }
 
-        $(DOMstring.compactDisc).style.opacity = newCdWidth / cdWidth;
+        $(DOMstrings.compactDisc).style.opacity = newCdWidth / cdWidth;
       };
+    },
+    loadSong: function (song) {
+      $(DOMstrings.songLabel).textContent = song.name;
+      $(DOMstrings.songThumb).style.backgroundImage = `url(${song.image})`;
+      $(DOMstrings.audio).src = song.url;
+    },
+    audioOnPlay: function () {
+      $(DOMstrings.audio).onplay = function () {
+        animation.play();
+      };
+    },
+    audioOnPause: function () {
+      $(DOMstrings.audio).onpause = function () {
+        animation.pause();
+      };
+    },
+    audioOnChangeTime: function () {
+      $(DOMstrings.audio).ontimeupdate = function () {
+        if ($(DOMstrings.audio).duration) {
+          $(DOMstrings.progressEl).value = Math.floor(
+            ($(DOMstrings.audio).currentTime / $(DOMstrings.audio).duration) *
+              100
+          );
+        }
+      };
+    },
+    progressBarOnChange: function () {
+      $(DOMstrings.progressEl).addEventListener("change", function (e) {
+        $(DOMstrings.audio).currentTime =
+          (e.target.value * $(DOMstrings.audio).duration) / 100;
+      });
+    },
+    getDOMstrings: function () {
+      return DOMstrings;
     },
   };
 })();
 
 var app = (function (musicCtrl, UICtrl) {
+  var DOM = UICtrl.getDOMstrings();
   var setupEventListener = function () {
     UICtrl.displaySongs(musicCtrl.getPlaylist());
+    UICtrl.loadSong(musicCtrl.getSong(0));
     UICtrl.scrollEvent();
+
+    $(DOM.playBtn).addEventListener("click", playMusic);
+
+    UICtrl.audioOnPlay();
+    UICtrl.audioOnPause();
+    UICtrl.progressBarOnChange();
+    UICtrl.audioOnChangeTime();
   };
+
+  var playMusic = function () {
+    if ($(DOM.playerEl).getAttribute("cd") === "start") {
+      $(DOM.audio).play();
+      $(DOM.playerEl).setAttribute("cd", "starting");
+      $(DOM.playerEl).classList.add("playing");
+    } else {
+      $(DOM.audio).pause();
+      $(DOM.playerEl).setAttribute("cd", "start");
+      $(DOM.playerEl).classList.remove("playing");
+    }
+  };
+
   return {
     init: function () {
       console.log("Application has started...");
@@ -116,4 +190,4 @@ var app = (function (musicCtrl, UICtrl) {
 
 app.init();
 
-// 17: 01
+// 49: 08
