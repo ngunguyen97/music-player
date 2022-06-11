@@ -5,6 +5,7 @@ var musicController = (function () {
   var data = {
     currentSongIndex: 0,
     isPlaying: false,
+    isRandom: false,
     playlist: [
       {
         id: 1,
@@ -67,6 +68,12 @@ var musicController = (function () {
     getCurrentSongIndex: function () {
       return data.currentSongIndex;
     },
+    setRandomStatus: function (status) {
+      data.isRandom = status;
+    },
+    getRandomStatus: function () {
+      return data.isRandom;
+    },
   };
 })();
 
@@ -82,6 +89,7 @@ var UIController = (function () {
     progressEl: "#progress",
     nextBtn: ".btn-next",
     prevBtn: ".btn-prev",
+    randomBtn: ".btn-random",
   };
 
   var animation = $(DOMstrings.compactDisc).animate(
@@ -111,7 +119,6 @@ var UIController = (function () {
       $(DOMstrings.audio).play();
     };
   };
-
   return {
     displaySongs: function (songs) {
       var htmls, newHtmls;
@@ -184,10 +191,18 @@ var UIController = (function () {
           (e.target.value * $(DOMstrings.audio).duration) / 100;
       });
     },
-    audioOnEnded: function (musicCtrl, loadSongFn) {
-      $(DOMstrings.audio).onended = nextSong(musicCtrl, loadSongFn);
+    audioOnEnded: function () {
+      $(DOMstrings.audio).onended = function () {
+        $(DOMstrings.nextBtn).click();
+        // var isRadomActive = musicCtrl.getRandomStatus();
+        // if (isRadomActive) {
+        //   _this.playRandomSong(musicCtrl);
+        // } else {
+        //   nextSong(musicCtrl, _this.loadSong).call();
+        // }
+      };
     },
-    playMusic: function (musicController) {
+    playMusicBtn: function (musicController) {
       function handleEvent(musicController, DOMstrings) {
         return function () {
           if (!musicController.getisPlaying()) {
@@ -205,13 +220,22 @@ var UIController = (function () {
         false
       );
     },
-    nextSong: function (musicCtrl, loadSongFn) {
+    nextSongBtn: function (musicCtrl) {
+      var _this = this;
       $(DOMstrings.nextBtn).addEventListener(
         "click",
-        nextSong(musicCtrl, loadSongFn)
+        function (musicCtrl) {
+          var randomStatus = musicCtrl.getRandomStatus();
+          if (randomStatus) {
+            _this.playRandomSong(musicCtrl);
+          } else {
+            nextSong(musicCtrl, _this.loadSong).call();
+          }
+        }.bind($(DOMstrings.nextBtn), musicCtrl)
       );
     },
-    prevSong: function (musicCtrl, loadSongFn) {
+    prevSongBtn: function (musicCtrl) {
+      var _this = this;
       function handleEvent(musicCtrl, loadSongFn) {
         return function () {
           var prevSongindex, playlistLength;
@@ -234,11 +258,36 @@ var UIController = (function () {
 
       $(DOMstrings.prevBtn).addEventListener(
         "click",
-        handleEvent(musicCtrl, loadSongFn)
+        handleEvent(musicCtrl, _this.loadSong)
       );
     },
     getDOMstrings: function () {
       return DOMstrings;
+    },
+    randomSongBtn: function (musicCtrl) {
+      $(DOMstrings.randomBtn).addEventListener(
+        "click",
+        function (musicCtrl) {
+          var isRandomActive = !musicCtrl.getRandomStatus();
+          musicCtrl.setRandomStatus(isRandomActive);
+
+          $(DOMstrings.randomBtn).classList.toggle("active", isRandomActive);
+        }.bind($(DOMstrings.randomBtn), musicCtrl)
+      );
+    },
+    playRandomSong: function (musicCtrl) {
+      var _this = this;
+      var currentSongIndex = musicController.getCurrentSongIndex();
+      var randomSongIndex = Math.floor(
+        Math.random() * musicCtrl.getPlaylist().length
+      );
+      if (currentSongIndex === randomSongIndex) {
+        _this.playRandomSong(musicCtrl);
+        return;
+      }
+      musicCtrl.setCurrentSongIndex(randomSongIndex);
+      _this.loadSong(musicCtrl.getSong(randomSongIndex));
+      $(DOMstrings.audio).play();
     },
   };
 })();
@@ -250,20 +299,23 @@ var app = (function (musicCtrl, UICtrl) {
     UICtrl.displaySongs(musicCtrl.getPlaylist());
     UICtrl.loadSong(musicCtrl.getSong(currentSongIndex));
     UICtrl.scrollEvent();
+    // Click on Prev Button
+    UICtrl.prevSongBtn(musicCtrl);
+
     // Click on playmusic Button
-    UICtrl.playMusic(musicCtrl);
+    UICtrl.playMusicBtn(musicCtrl);
+
+    // Click on Next Button
+    UICtrl.nextSongBtn(musicCtrl);
+
+    // Click on Random Button
+    UICtrl.randomSongBtn(musicCtrl);
 
     UICtrl.audioOnPlay();
     UICtrl.audioOnPause();
     UICtrl.progressBarOnChange();
     UICtrl.audioOnChangeTime();
-    UICtrl.audioOnEnded(musicCtrl, UICtrl.loadSong);
-
-    // Click on Next Button
-    UICtrl.nextSong(musicCtrl, UICtrl.loadSong);
-
-    // Click on Prev Button
-    UICtrl.prevSong(musicCtrl, UICtrl.loadSong);
+    UICtrl.audioOnEnded();
   };
 
   return {
@@ -276,4 +328,4 @@ var app = (function (musicCtrl, UICtrl) {
 
 app.init();
 
-// 49: 08
+// 1:06:06
