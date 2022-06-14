@@ -90,6 +90,8 @@ var UIController = (function () {
     compactDisc: ".cd",
     songLabel: "header h2",
     songThumb: ".cd-thumb",
+    songDiv: ".song",
+    activeSong: ".song.active",
     audio: "#audio",
     playBtn: ".btn-toggle-play",
     playerEl: ".player",
@@ -109,30 +111,14 @@ var UIController = (function () {
   );
   animation.pause();
 
-  var nextSong = function (musicCtrl, loadSongFn) {
-    return function () {
-      var nextSongIndex, playlistLength;
-
-      playlistLength = musicCtrl.getPlaylist().length - 1;
-      nextSongIndex = musicCtrl.getCurrentSongIndex() + 1;
-      musicCtrl.setCurrentSongIndex(nextSongIndex);
-
-      if (nextSongIndex > playlistLength) {
-        musicCtrl.setCurrentSongIndex(0);
-        nextSongIndex = 0;
-      }
-
-      loadSongFn(musicCtrl.getSong(nextSongIndex));
-      musicCtrl.setIsPlaying(true);
-      $(DOMstrings.audio).play();
-    };
-  };
   return {
-    displaySongs: function (songs) {
+    displaySongs: function (songs, currentSongIndex) {
       var htmls, newHtmls;
-      htmls = songs.map(function (song) {
+      htmls = songs.map(function (song, index) {
         return `
-            <div class="song">
+            <div class="song ${
+              index === currentSongIndex ? "active" : ""
+            }" data-index-number=${index}>
             <div class="thumb" style="background-image: url(${song.image})">
             </div>
             <div class="body">
@@ -233,6 +219,26 @@ var UIController = (function () {
         false
       );
     },
+    nextSong: function (musicCtrl, loadSongFn) {
+      var _this = this;
+      return function () {
+        var nextSongIndex, playlistLength;
+
+        playlistLength = musicCtrl.getPlaylist().length - 1;
+        nextSongIndex = musicCtrl.getCurrentSongIndex() + 1;
+        musicCtrl.setCurrentSongIndex(nextSongIndex);
+
+        if (nextSongIndex > playlistLength) {
+          musicCtrl.setCurrentSongIndex(0);
+          nextSongIndex = 0;
+        }
+        _this.jumpActiveClass(nextSongIndex);
+
+        loadSongFn(musicCtrl.getSong(nextSongIndex));
+        musicCtrl.setIsPlaying(true);
+        $(DOMstrings.audio).play();
+      };
+    },
     nextSongBtn: function (musicCtrl) {
       var _this = this;
       $(DOMstrings.nextBtn).addEventListener(
@@ -242,8 +248,9 @@ var UIController = (function () {
           if (randomStatus) {
             _this.playRandomSong(musicCtrl);
           } else {
-            nextSong(musicCtrl, _this.loadSong).call();
+            _this.nextSong(musicCtrl, _this.loadSong).call();
           }
+          _this.scrollIntoView();
         }.bind($(DOMstrings.nextBtn), musicCtrl)
       );
     },
@@ -262,6 +269,9 @@ var UIController = (function () {
             musicCtrl.setCurrentSongIndex(playlistLength);
             prevSongindex = playlistLength;
           }
+
+          _this.jumpActiveClass(prevSongindex);
+          _this.scrollIntoView();
 
           loadSongFn(musicCtrl.getSong(prevSongindex));
           musicCtrl.setIsPlaying(true);
@@ -310,8 +320,38 @@ var UIController = (function () {
         return;
       }
       musicCtrl.setCurrentSongIndex(randomSongIndex);
+      _this.jumpActiveClass(randomSongIndex);
       _this.loadSong(musicCtrl.getSong(randomSongIndex));
       $(DOMstrings.audio).play();
+    },
+    jumpActiveClass: function (currentSongIndex) {
+      var songsArr = Array.prototype.slice.call($$(DOMstrings.songDiv));
+
+      songsArr.find(function (song) {
+        if (song.classList.contains("active")) {
+          song.classList.remove("active");
+          return song.dataset.indexNumber;
+        }
+      });
+
+      songsArr[currentSongIndex].classList.add("active");
+    },
+    scrollIntoView: function () {
+      var _this = this;
+      window.scroll({
+        top: _this.findPosition($(DOMstrings.activeSong)),
+        left: 0,
+        behavior: "smooth",
+      });
+    },
+    findPosition: function (selector) {
+      var curtop = 0;
+      if (selector.offsetParent) {
+        do {
+          curtop += selector.offsetTop;
+        } while ((selector = selector.offsetParent));
+        return [curtop];
+      }
     },
   };
 })();
@@ -320,7 +360,7 @@ var app = (function (musicCtrl, UICtrl) {
   var setupEventListener, currentSongIndex;
   currentSongIndex = musicCtrl.getCurrentSongIndex();
   setupEventListener = function () {
-    UICtrl.displaySongs(musicCtrl.getPlaylist());
+    UICtrl.displaySongs(musicCtrl.getPlaylist(), currentSongIndex);
     UICtrl.loadSong(musicCtrl.getSong(currentSongIndex));
     UICtrl.scrollEvent();
     // Click on Random Button
@@ -354,5 +394,3 @@ var app = (function (musicCtrl, UICtrl) {
 })(musicController, UIController);
 
 app.init();
-
-// 1:06:06
