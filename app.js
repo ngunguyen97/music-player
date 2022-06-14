@@ -6,6 +6,7 @@ var musicController = (function () {
     currentSongIndex: 0,
     isPlaying: false,
     isRandom: false,
+    isRepeatable: false,
     playlist: [
       {
         id: 1,
@@ -74,6 +75,12 @@ var musicController = (function () {
     getRandomStatus: function () {
       return data.isRandom;
     },
+    setRepeatStatus: function (status) {
+      data.isRepeatable = status;
+    },
+    getRepeatStatus: function () {
+      return data.isRepeatable;
+    },
   };
 })();
 
@@ -90,6 +97,7 @@ var UIController = (function () {
     nextBtn: ".btn-next",
     prevBtn: ".btn-prev",
     randomBtn: ".btn-random",
+    repeatBtn: ".btn-repeat",
   };
 
   var animation = $(DOMstrings.compactDisc).animate(
@@ -191,16 +199,21 @@ var UIController = (function () {
           (e.target.value * $(DOMstrings.audio).duration) / 100;
       });
     },
-    audioOnEnded: function () {
-      $(DOMstrings.audio).onended = function () {
-        $(DOMstrings.nextBtn).click();
+    audioOnEnded: function (musicCtrl) {
+      $(DOMstrings.audio).onended = function (musicCtrl) {
+        var isRepeated = musicCtrl.getRepeatStatus();
+        if (isRepeated) {
+          $(DOMstrings.audio).play();
+        } else {
+          $(DOMstrings.nextBtn).click();
+        }
         // var isRadomActive = musicCtrl.getRandomStatus();
         // if (isRadomActive) {
         //   _this.playRandomSong(musicCtrl);
         // } else {
         //   nextSong(musicCtrl, _this.loadSong).call();
         // }
-      };
+      }.bind($(DOMstrings.audio), musicCtrl);
     },
     playMusicBtn: function (musicController) {
       function handleEvent(musicController, DOMstrings) {
@@ -275,6 +288,17 @@ var UIController = (function () {
         }.bind($(DOMstrings.randomBtn), musicCtrl)
       );
     },
+    repeatSongBtn: function (musicCtrl) {
+      $(DOMstrings.repeatBtn).addEventListener(
+        "click",
+        function (musicCtrl) {
+          var isActive = !musicCtrl.getRepeatStatus();
+          musicCtrl.setRepeatStatus(isActive);
+
+          $(DOMstrings.repeatBtn).classList.toggle("active", isActive);
+        }.bind($(DOMstrings.repeatBtn), musicCtrl)
+      );
+    },
     playRandomSong: function (musicCtrl) {
       var _this = this;
       var currentSongIndex = musicController.getCurrentSongIndex();
@@ -299,6 +323,9 @@ var app = (function (musicCtrl, UICtrl) {
     UICtrl.displaySongs(musicCtrl.getPlaylist());
     UICtrl.loadSong(musicCtrl.getSong(currentSongIndex));
     UICtrl.scrollEvent();
+    // Click on Random Button
+    UICtrl.repeatSongBtn(musicCtrl);
+
     // Click on Prev Button
     UICtrl.prevSongBtn(musicCtrl);
 
@@ -315,7 +342,7 @@ var app = (function (musicCtrl, UICtrl) {
     UICtrl.audioOnPause();
     UICtrl.progressBarOnChange();
     UICtrl.audioOnChangeTime();
-    UICtrl.audioOnEnded();
+    UICtrl.audioOnEnded(musicCtrl);
   };
 
   return {
