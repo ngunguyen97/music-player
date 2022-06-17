@@ -156,6 +156,7 @@ var UIController = (function () {
       $(DOMstrings.songLabel).textContent = song.name;
       $(DOMstrings.songThumb).style.backgroundImage = `url(${song.image})`;
       $(DOMstrings.audio).src = song.url;
+      $(DOMstrings.audio).load();
     },
     audioOnPlay: function () {
       $(DOMstrings.audio).onplay = function () {
@@ -172,10 +173,9 @@ var UIController = (function () {
     audioOnChangeTime: function () {
       $(DOMstrings.audio).ontimeupdate = function () {
         if ($(DOMstrings.audio).duration) {
-          $(DOMstrings.progressEl).value = Math.floor(
+          $(DOMstrings.progressEl).value =
             ($(DOMstrings.audio).currentTime / $(DOMstrings.audio).duration) *
-              100
-          );
+            100;
         }
       };
     },
@@ -353,6 +353,31 @@ var UIController = (function () {
         return [curtop];
       }
     },
+    playSong: function () {},
+    playSongOnPlaylist: function (musicCtrl) {
+      var _this = this;
+      function handleEvent(e) {
+        var optionClass = e.target.parentNode.classList.value;
+        if (e.target.closest(".song.active") && !e.target.closest(".option"))
+          return;
+
+        if (optionClass === "option") return;
+
+        if (e.target.closest(".song:not(.active)")) {
+          var currentSongIndex, currentSong;
+          currentSongIndex = parseInt(
+            e.target.closest(".song:not(.active)").dataset.indexNumber
+          );
+
+          currentSong = musicCtrl.getSong(currentSongIndex);
+          _this.jumpActiveClass(currentSongIndex);
+          _this.loadSong(currentSong);
+          $(DOMstrings.audio).play();
+        }
+      }
+
+      $(DOMstrings.playlistEl).addEventListener("click", handleEvent);
+    },
   };
 })();
 
@@ -377,6 +402,9 @@ var app = (function (musicCtrl, UICtrl) {
 
     // Click on Random Button
     UICtrl.randomSongBtn(musicCtrl);
+
+    // Click a specific song on the playlist.
+    UICtrl.playSongOnPlaylist(musicCtrl);
 
     UICtrl.audioOnPlay();
     UICtrl.audioOnPause();
