@@ -12,15 +12,15 @@ var musicController = (function () {
         id: 1,
         name: "On My Way",
         singer: "Alan Walker",
-        url: "https://play.imusicvn.com/stream/4mS3RM4QWrvb",
+        url: "/assets/playlist/OnMyWay.mp3",
         image:
           "https://avatar-ex-swe.nixcdn.com/playlist/2019/03/21/b/2/9/4/1553136202684_500.jpg",
       },
       {
         id: 2,
         name: "Don't Call Me",
-        singer: "Luke Combs",
-        url: "https://play.imusicvn.com/stream/o7mDYsLfQ8hL",
+        singer: "Nevada, Loote",
+        url: "/assets/playlist/o7mDYsLfQ8hL.mp3",
         image:
           "https://avatar-ex-swe.nixcdn.com/playlist/2018/09/13/a/f/1/5/1536797156492_500.jpg",
       },
@@ -28,7 +28,7 @@ var musicController = (function () {
         id: 3,
         name: "Denim & Rhinestones",
         singer: "Carrie",
-        url: "https://play.imusicvn.com/stream/PZDaAGEfkC3n",
+        url: "/assets/playlist/Carrie_Underwood.mp3",
         image:
           "https://avatar-ex-swe.nixcdn.com/playlist/2022/04/05/1/f/a/d/1649149056764_500.jpg",
       },
@@ -36,7 +36,7 @@ var musicController = (function () {
         id: 4,
         name: "Something Just Like This",
         singer: "The Chainsmokers",
-        url: "https://play.imusicvn.com/stream/RCWcGY0sUp8Z",
+        url: "/assets/playlist/SomethingJustLikeThis.mp3",
         image:
           "https://avatar-ex-swe.nixcdn.com/playlist/2017/05/23/c/c/d/9/1495542089406_500.jpg",
       },
@@ -44,7 +44,7 @@ var musicController = (function () {
         id: 5,
         name: "All Falls Down",
         singer: "Alan Walker",
-        url: "https://play.imusicvn.com/stream/lmjlz0UwtE5d",
+        url: "/assets/playlist/AllFallsDown.mp3",
         image:
           "https://avatar-ex-swe.nixcdn.com/playlist/2018/01/04/5/6/9/b/1515043838519_500.jpg",
       },
