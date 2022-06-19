@@ -13,40 +13,35 @@ var musicController = (function () {
         name: "On My Way",
         singer: "Alan Walker",
         url: "/assets/playlist/OnMyWay.mp3",
-        image:
-          "https://avatar-ex-swe.nixcdn.com/playlist/2019/03/21/b/2/9/4/1553136202684_500.jpg",
+        image: "/assets/images/1553136202684_500.jpg",
       },
       {
         id: 2,
         name: "Don't Call Me",
         singer: "Nevada, Loote",
         url: "/assets/playlist/o7mDYsLfQ8hL.mp3",
-        image:
-          "https://avatar-ex-swe.nixcdn.com/playlist/2018/09/13/a/f/1/5/1536797156492_500.jpg",
+        image: "/assets/images/1536797156492_500.jpg",
       },
       {
         id: 3,
         name: "Denim & Rhinestones",
         singer: "Carrie",
         url: "/assets/playlist/Carrie_Underwood.mp3",
-        image:
-          "https://avatar-ex-swe.nixcdn.com/playlist/2022/04/05/1/f/a/d/1649149056764_500.jpg",
+        image: "/assets/images/1649149056764_500.jpg",
       },
       {
         id: 4,
         name: "Something Just Like This",
         singer: "The Chainsmokers",
         url: "/assets/playlist/SomethingJustLikeThis.mp3",
-        image:
-          "https://avatar-ex-swe.nixcdn.com/playlist/2017/05/23/c/c/d/9/1495542089406_500.jpg",
+        image: "/assets/images/1495542089406_500.jpg",
       },
       {
         id: 5,
         name: "All Falls Down",
         singer: "Alan Walker",
         url: "/assets/playlist/AllFallsDown.mp3",
-        image:
-          "https://avatar-ex-swe.nixcdn.com/playlist/2018/01/04/5/6/9/b/1515043838519_500.jpg",
+        image: "/assets/images/1515043838519_500.jpg",
       },
     ],
   };
